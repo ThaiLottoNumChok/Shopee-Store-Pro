@@ -59,6 +59,20 @@
         }
         .btn:hover { background-color: #d73211; }
         
+        .btn-scan {
+            background-color: #0284c7;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            margin-bottom: 15px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        .btn-scan:hover { background-color: #0369a1; }
+
         .form-group {
             margin-bottom: 12px;
             text-align: left;
@@ -248,6 +262,7 @@
 
         <div class="section-box" id="admin-section">
             <h2>🛒 เพิ่มสินค้าพร้อมรูปภาพ (แอดมิน)</h2>
+            <button class="btn-scan" onclick="scanBadImages()">⚡ สแกนรูปภาพสินค้าที่หมดอายุ/เสีย</button>
             <div class="form-group">
                 <label>ชื่อสินค้า / ป้ายกำกับ:</label>
                 <input type="text" id="linkTitle" placeholder="เช่น น้ำปลาร้าแม่พิม 500ml">
@@ -325,7 +340,7 @@
                         'Accept': 'application/vnd.github.v3+json'
                     },
                     body: JSON.stringify({
-                        message: "Update products.json with image via web admin",
+                        message: "Update products.json with health check via web admin",
                         content: base64Content,
                         sha: fileSha
                     })
@@ -358,6 +373,30 @@
             }
         }
 
+        function handleImageError(imgElement) {
+            imgElement.onerror = null;
+            imgElement.src = 'https://via.placeholder.com/75?text=Expired+Image';
+            const titleElement = imgElement.nextElementSibling;
+            if (titleElement && !titleElement.innerHTML.includes('⚠️')) {
+                titleElement.innerHTML += ' <span style="color:#ef4444; font-size:11px; font-weight:bold;">(⚠️ สินค้าอาจหมดอายุ)</span>';
+            }
+        }
+
+        function scanBadImages() {
+            const images = document.querySelectorAll('.product-thumb');
+            let badCount = 0;
+            images.forEach(img => {
+                if (img.src.includes('Expired+Image') || img.naturalWidth === 0) {
+                    badCount++;
+                }
+            });
+            if (badCount > 0) {
+                alert(`⚠️ ตรวจพบรูปภาพสินค้าเสีย/หมดอายุ จำนวน ${badCount} รายการ! กรุณากดปุ่ม 🗑️ ลบ เพื่ออัปเดตระบบ`);
+            } else {
+                alert("✅ รูปภาพสินค้าทุกรายการสมบูรณ์ดีครับ!");
+            }
+        }
+
         function renderProducts() {
             const categories = ['food', 'home', 'beauty', 'hobby', 'health'];
             categories.forEach(cat => {
@@ -386,7 +425,7 @@
 
                     div.innerHTML = `
                         <a href="${item.url}" target="_blank" class="product-main-link">
-                            <img src="${imgSrc}" class="product-thumb" alt="Product">
+                            <img src="${imgSrc}" class="product-thumb" alt="Product" onerror="handleImageError(this)">
                             <div class="product-title">${item.title}</div>
                         </a>
                         <div class="product-footer">
@@ -475,4 +514,4 @@
         fetchProducts();
     </script>
 </body>
-  </html>
+</html>
